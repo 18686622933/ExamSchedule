@@ -2,20 +2,45 @@
 # -*- coding:utf-8 -*-
 
 import config
-import pandas
-
-df = pandas.DataFrame(config.course['data'], columns=config.course['titles'])
-pandas.set_option('display.max_columns', 1000)  # 设置显示最大列数，超过会显示省略号
-pandas.set_option('display.max_rows', 5000)  # 设置显示最大行数，超过会显示省略号
-pandas.set_option('display.width', 1000)  # 设置每行显示的最大宽度，超过会换行
-pandas.set_option('display.unicode.east_asian_width', True)  # 列明对其
-# print(df)
+from myFunction import *
 
 
+class TimeTransform:
+    def __init__(self, exam_week):
+        self.one = '8:00-10:00'
+        self.two = '10:20-12:20'
+        self.three = '13:30-15:30'
+        self.four = '15:50-17:50'
+        self.starting, self.ending = exam_week.split('-')
+        self.start_year, self.end_year = [i[:4] for i in (self.starting, self.ending)]
 
-# print(df.loc[2, '考试时间'])
-a = df.loc[0]
-print(a)
-# print(a['考试日期'])
-# print(a['考试时间'])
-# print(a['年级'])
+    def getExamDays(self):
+        """
+        获取考试周的全部日期列表
+        其中要判断考试周是否跨年
+        :return:
+        """
+        if self.start_year == self.end_year:
+            year_days = YearDays().getAllDayPerYear(self.start_year)
+            start_idx = year_days.index(self.starting)
+            end_idx = year_days.index(self.ending)
+            res = year_days[start_idx:end_idx + 1]
+
+        else:
+            last = YearDays().getAllDayPerYear(self.start_year)
+            follow = YearDays().getAllDayPerYear(self.end_year)
+            start_idx = last.index(self.starting)
+            end_idx = follow.index(self.ending)
+            res = last[start_idx:] + follow[:end_idx + 1]
+
+        return res
+
+    def getNumbersOfDays(self):
+        """获得考试周总天数"""
+        return len(self.getExamDays())
+
+
+if __name__ == '__main__':
+    ts = TimeTransform(config.exam_week)
+    print(ts.getExamDays())
+    print(ts.getNumbersOfDays())
